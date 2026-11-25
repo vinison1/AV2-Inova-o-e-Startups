@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Área do Estabelecimento — {{ NOME_APP }}{% endblock %}
+
+{% block content %}
+<section class="est-header est-header-compacto">
+  <div class="container">
+    <a href="{{ url_for('index') }}" class="est-voltar">← Voltar para a vitrine pública</a>
+    <h1 class="est-nome">Acesso do Estabelecimento</h1>
+    <p class="est-desc mb-0">
+      Área restrita aos negócios parceiros para emissão de códigos únicos de visita e acompanhamento de avaliações.
+    </p>
+  </div>
+</section>
+
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center g-4">
+      <div class="col-lg-5">
+        <div class="form-card p-4 shadow-sm">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="h4 fw-bold mb-0">Entrar no Painel</h2>
+            <span class="badge-verificado">Acesso Restrito</span>
+          </div>
+
+          {% if erro %}
+            <div class="alert alert-danger py-2" role="alert">
+              {{ erro }}
+            </div>
+          {% endif %}
+
+          <form method="post" action="{{ url_for('login') }}">
+            <div class="mb-3">
+              <label for="email" class="form-label fw-semibold">E-mail corporativo</label>
+              <input
+                type="email"
+                class="form-control"
+                id="email"
+                name="email"
+                value="{{ email }}"
+                placeholder="ex: alpendre@suindara.com.br"
+                required
+                autofocus
+              >
+            </div>
+
+            <div class="mb-4">
+              <label for="senha" class="form-label fw-semibold">Senha</label>
+              <input
+                type="password"
+                class="form-control"
+                id="senha"
+                name="senha"
+                placeholder="Digite sua senha"
+                required
+              >
+            </div>
+
+            <button type="submit" class="btn btn-su-green w-100 py-2">
+              Acessar painel do estabelecimento
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="form-card p-4 h-100">
+          <h3 class="h6 fw-bold text-uppercase mb-2">Contas de Demonstração (MVP)</h3>
+          <p class="small text-secondary mb-3">
+            Clique em um estabelecimento abaixo para preencher e-mail e senha automaticamente durante a apresentação:
+          </p>
+
+          <div class="d-grid gap-2">
+            {% for conta in contas_demo %}
+              <button
+                type="button"
+                class="btn btn-outline-su text-start d-flex align-items-center justify-content-between py-2 px-3"
+                onclick="preencherDemo('{{ conta.email }}', '{{ conta.senha }}')"
+              >
+                <span>
+                  <strong class="d-block">{{ conta.emoji }} {{ conta.nome }}</strong>
+                  <small class="text-secondary">{{ conta.email }}</small>
+                </span>
+                <span class="chip">Usar</span>
+              </button>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  function preencherDemo(email, senha) {
+    document.getElementById("email").value = email;
+    document.getElementById("senha").value = senha;
+    document.getElementById("email").focus();
+  }
+</script>
+{% endblock %}

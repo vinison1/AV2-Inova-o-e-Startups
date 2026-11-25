@@ -1,0 +1,81 @@
+{% from "_macros.html" import selo, coruja -%}
+{% set ep = request.endpoint -%}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ NOME_APP }} - {{ SLOGAN }}{% endblock %}</title>
+  <meta name="description" content="{{ PROPOSTA }}">
+  <meta name="theme-color" content="#3f6c45">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpolygon points='12.00,1.00 14.51,2.63 17.50,2.47 18.86,5.14 21.53,6.50 21.37,9.49 23.00,12.00 21.37,14.51 21.53,17.50 18.86,18.86 17.50,21.53 14.51,21.37 12.00,23.00 9.49,21.37 6.50,21.53 5.14,18.86 2.47,17.50 2.63,14.51 1.00,12.00 2.63,9.49 2.47,6.50 5.14,5.14 6.50,2.47 9.49,2.63' fill='%233f6c45' stroke='%233f6c45' stroke-width='1.4' stroke-linejoin='round'/%3E%3Cpath d='M7.7 12.4l3 3 5.7-6.1' fill='none' stroke='%23f4f1ea' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+  <!-- Bootstrap 5 via CDN. Se a internet falhar, tenta a cópia local em static/vendor/ (veja o README). -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+        crossorigin="anonymous"
+        onerror="this.onerror=null;this.removeAttribute('integrity');this.href='{{ url_for('static', filename='vendor/bootstrap.min.css') }}';">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+  <nav class="navbar navbar-expand-md navbar-su sticky-top" data-bs-theme="dark" aria-label="Navegação principal">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('index') }}" aria-label="{{ NOME_APP }}, página inicial">
+        <span class="brand-coruja">{{ coruja(22) }}</span>
+        <span>{{ NOME_APP }}</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
+              aria-controls="menu" aria-expanded="false" aria-label="Abrir menu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="menu">
+        <ul class="navbar-nav ms-auto gap-md-1">
+          <li class="nav-item">
+            <a class="nav-link {% if ep in ('index', 'estabelecimento') %}active{% endif %}"
+               href="{{ url_for('index') }}">Estabelecimentos</a>
+          </li>
+          {% if estabelecimento_logado %}
+  <li class="nav-item">
+    <a class="nav-link {% if ep in ('painel', 'gerar_codigo') %}active{% endif %}"
+       href="{{ url_for('painel') }}">{{ estabelecimento_logado.emoji }} {{ estabelecimento_logado.nome }}</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{{ url_for('logout') }}">Sair</a>
+  </li>
+{% else %}
+  <li class="nav-item">
+    <a class="nav-link {% if ep == 'login' %}active{% endif %}"
+       href="{{ url_for('login') }}">Área do Estabelecimento</a>
+  </li>
+{% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer-su">
+    <div class="container d-flex flex-column flex-md-row justify-content-between gap-3">
+      <div>
+        <div class="footer-marca">{{ selo(20) }}<span>{{ NOME_APP }}</span></div>
+        <p class="mb-0 small">{{ SLOGAN }}</p>
+      </div>
+      <p class="mb-0 small text-md-end">
+        &copy; {{ ano_atual }} {{ NOME_APP }}. Projeto acadêmico, versão de demonstração.<br>
+        Estabelecimentos e avaliações fictícios, criados só para a apresentação.
+      </p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+          crossorigin="anonymous"
+          onerror="var s=document.createElement('script');s.src='{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}';document.body.appendChild(s);"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

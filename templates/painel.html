@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% from "_macros.html" import selo, flashes %}
+
+{% block title %}Área do Estabelecimento - Gerar códigos de comprovante | {{ NOME_APP }}{% endblock %}
+
+{% block content %}
+<section class="est-header est-header-compacto">
+  <div class="container">
+    <h1 class="est-nome mb-1">Área do Estabelecimento</h1>
+    <p class="est-desc mb-0">Gere um código de comprovante de uso único para cada cliente. Só com ele a avaliação é liberada.</p>
+  </div>
+</section>
+
+{{ flashes() }}
+
+<div class="container py-5 d-grid gap-4">
+
+  <!-- 1. Escolha do estabelecimento -->
+  <div class="card form-card">
+    <div class="card-body p-4">
+      <form method="get" action="{{ url_for('painel') }}" class="row g-3 align-items-end">
+        <div class="col-md-7 col-lg-6">
+          <label for="estabelecimento_id" class="form-label fw-semibold">Selecione o seu estabelecimento</label>
+          <select class="form-select" id="estabelecimento_id" name="estabelecimento_id" required
+                  onchange="this.form.submit()">
+            {% if not selecionado %}<option value="" selected disabled>Escolha na lista</option>{% endif %}
+            {% for item in estabelecimentos %}
+            <option value="{{ item.id }}" {% if selecionado and selecionado.id == item.id %}selected{% endif %}>
+              {{ item.nome }} ({{ item.categoria }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-5 col-lg-6">
+          <noscript><button class="btn btn-su-dark mb-2" type="submit">Abrir painel</button></noscript>
+          <p class="form-text mb-0">Demonstração: em produção, esta área pediria login do estabelecimento.</p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Painel do estabelecimento selecionado -->
+  {% if not selecionado %}
+  <div class="vazio">
+    <p class="fw-semibold mb-1">Nenhum estabelecimento selecionado.</p>
+    <p class="text-secondary mb-0">Escolha seu estabelecimento acima para gerar códigos e acompanhar quais já foram usados.</p>
+  </div>
+
+  {% else %}
+  <div class="card form-card">
+    <div class="card-body p-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+          <span class="chip mb-2">{{ selecionado.categoria }}</span>
+          <h2 class="h5 fw-bold mb-1">{{ selecionado.nome }}</h2>
+          <p class="text-secondary small mb-0">
+            {{ total_ativos }} {{ 'código ativo' if total_ativos == 1 else 'códigos ativos' }}
+            e {{ total_usados }} {{ 'utilizado' if total_usados == 1 else 'utilizados' }}.
+          </p>
+        </div>
+        <form method="post" action="{{ url_for('gerar_codigo') }}">
+          <input type="hidden" name="estabelecimento_id" value="{{ selecionado.id }}">
+          <button type="submit" class="btn btn-su-green btn-lg">Gerar Código de Comprovante</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if novo_codigo %}
+  <div class="ticket ticket-novo" role="status">
+    <div class="ticket-rotulo">Novo código gerado. Entregue ao cliente junto com o comprovante ou cupom.</div>
+    <div class="ticket-codigo">{{ novo_codigo.codigo }}</div>
+    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+      <button type="button" class="btn btn-su-dark btn-sm" data-copiar="{{ novo_codigo.codigo }}">Copiar código</button>
+      <a class="btn btn-outline-su btn-sm"
+         href="{{ url_for('estabelecimento', estabelecimento_id=selecionado.id, codigo=novo_codigo.codigo, _anchor='avaliar') }}">Testar como cliente</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card form-card">
+    <div class="card-body p-0">
+      <div class="px-4 pt-4 pb-2">
+        <h2 class="h5 fw-bold mb-0">Códigos de comprovante</h2>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-su align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col">Situação</th>
+              <th scope="col">Gerado em</th>
+              <th scope="col">Utilizado</th>
+              <th scope="col" class="text-end">Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in codigos %}
+            <tr class="{% if novo_codigo and novo_codigo.id == c.id %}linha-nova{% endif %}">
+              <td><code class="codigo-tag {% if c.usado %}codigo-usado{% endif %}">{{ c.codigo }}</code></td>
+              <td>
+                {% if c.usado %}
+                <span class="status status-usado">Utilizado</span>
+                {% else %}
+                <span class="status status-ativo">Ativo</span>
+                {% endif %}
+              </td>
+              <td class="small text-secondary">{{ c.criado_em|data_br(true) }}</td>
+              <td class="small text-secondary">
+                {% if c.usado %}{{ c.usado_em|data_br(true) }}, por {{ c.usado_por }}{% else %}Aguardando o cliente{% endif %}
+              </td>
+              <td class="text-end text-nowrap">
+                {% if not c.usado %}
+                <button type="button" class="btn btn-outline-su btn-sm" data-copiar="{{ c.codigo }}">Copiar</button>
+                <a class="btn btn-outline-su btn-sm"
+                   href="{{ url_for('estabelecimento', estabelecimento_id=selecionado.id, codigo=c.codigo, _anchor='avaliar') }}">Testar como cliente</a>
+                {% else %}
+                <span class="small text-secondary">Código já utilizado</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-secondary py-4">Nenhum código gerado ainda. Clique no botão verde para criar o primeiro.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('[data-copiar]').forEach(function (botao) {
+    botao.addEventListener('click', function () {
+      var texto = botao.getAttribute('data-copiar');
+      var original = botao.textContent;
+      function avisar() {
+        botao.textContent = 'Copiado';
+        setTimeout(function () { botao.textContent = original; }, 1500);
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(texto).then(avisar);
+      } else {
+        var campo = document.createElement('textarea');
+        campo.value = texto;
+        document.body.appendChild(campo);
+        campo.select();
+        try { document.execCommand('copy'); avisar(); } catch (e) {}
+        document.body.removeChild(campo);
+      }
+    });
+  });
+</script>
+{% endblock %}

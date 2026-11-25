@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% from "_macros.html" import selo, estrelas, badge_verificado, flashes %}
+
+{% block title %}{{ NOME_APP }} - Avaliações verificadas de estabelecimentos em Fortaleza{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container">
+    <div class="row align-items-center gy-5 gx-lg-5">
+      <div class="col-lg-7">
+        <span class="hero-slogan">{{ SLOGAN }}</span>
+        <h1 class="hero-title">Avaliações reais de estabelecimentos, 100% comprovadas por quem esteve lá.</h1>
+        <p class="hero-lead">
+          Na {{ NOME_APP }}, só publica nota e relato quem prova a visita com o
+          <strong>código único do comprovante</strong>. Cada código vale uma avaliação.
+          Sem código, sem opinião.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="#estabelecimentos" class="btn btn-su-cream btn-lg px-4">Ver estabelecimentos</a>
+          <a href="{{ url_for('painel') }}" class="btn btn-su-dark btn-lg px-4">Sou um estabelecimento</a>
+        </div>
+      </div>
+
+      <div class="col-lg-5 d-none d-lg-block">
+        <div class="ticket ticket-hero" aria-hidden="true">
+          <div class="ticket-rotulo">Código de comprovante, uso único</div>
+          <div class="ticket-codigo">{{ PREFIXO_CODIGO }}-••••</div>
+          <hr class="ticket-corte">
+          <div class="ticket-status">{{ selo(20) }}<span>Visita verificada</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container passos-wrap" aria-labelledby="como-funciona">
+  <h2 id="como-funciona" class="visually-hidden">Como funciona</h2>
+  <ol class="row g-3 list-unstyled mb-0">
+    <li class="col-md-4">
+      <div class="passo">
+        <span class="passo-num">1</span>
+        <h3 class="h6 fw-bold">O estabelecimento gera o código</h3>
+        <p class="small text-secondary mb-0">No atendimento ou pagamento, o local emite um código único para aquele comprovante, no formato <span class="text-nowrap">{{ PREFIXO_CODIGO }}-0000</span>.</p>
+      </div>
+    </li>
+    <li class="col-md-4">
+      <div class="passo">
+        <span class="passo-num">2</span>
+        <h3 class="h6 fw-bold">O cliente leva o código no cupom</h3>
+        <p class="small text-secondary mb-0">O código só vale para o estabelecimento que o emitiu. Quem não consumiu ou utilizou o serviço não consegue avaliar.</p>
+      </div>
+    </li>
+    <li class="col-md-4">
+      <div class="passo">
+        <span class="passo-num">3</span>
+        <h3 class="h6 fw-bold">A avaliação sai com selo</h3>
+        <p class="small text-secondary mb-0">Ao publicar, o código é queimado e nunca mais pode ser reaproveitado. Um comprovante, uma avaliação.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+{{ flashes() }}
+
+<section id="estabelecimentos" class="container vitrine">
+  <div class="mb-4">
+    <h2 class="h3 fw-bold mb-1">Estabelecimentos em Fortaleza</h2>
+    <p class="text-secondary mb-0">Restaurantes, lojas, estacionamentos e serviços — toda nota aqui foi liberada por um código de uso único.</p>
+  </div>
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-2 g-4">
+    {% for e in estabelecimentos %}
+    <div class="col">
+      <article class="card card-estabelecimento h-100">
+        <div class="card-banner" aria-hidden="true">
+          <span class="chip">{{ e.categoria }}</span>
+          <span class="card-emoji">{{ e.emoji }}</span>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <h3 class="h5 fw-bold mb-1">{{ e.nome }}</h3>
+          <p class="text-secondary small mb-3">{{ e.bairro }}, Fortaleza. Faixa de preço {{ e.faixa_preco }}.</p>
+          <p class="small text-secondary clamp-3">{{ e.descricao }}</p>
+
+          <div class="mt-auto pt-2">
+            {% if e.total_avaliacoes %}
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="media-num">{{ e.media|decimal_br }}</span>
+              {{ estrelas(e.media) }}
+            </div>
+            {{ badge_verificado(
+                 texto=(e.total_avaliacoes ~ (' avaliação verificada' if e.total_avaliacoes == 1 else ' avaliações verificadas')),
+                 dica='Quantidade de avaliações liberadas por código de comprovante.') }}
+            {% else %}
+            <p class="small text-secondary mb-0">Ainda sem avaliações verificadas.</p>
+            {% endif %}
+
+            <a class="btn btn-su-dark w-100 mt-3" href="{{ url_for('estabelecimento', estabelecimento_id=e.id) }}">Ver Avaliações / Avaliar</a>
+          </div>
+        </div>
+      </article>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

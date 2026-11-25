@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% from "_macros.html" import selo, estrelas, badge_verificado, flashes %}
+
+{% block title %}{{ e.nome }} - Avaliações verificadas | {{ NOME_APP }}{% endblock %}
+
+{% block content %}
+{% set campo = erro.campo if erro else None %}
+
+<section class="est-header">
+  <div class="container">
+    <nav aria-label="Você está em" class="mb-3">
+      <a class="est-voltar" href="{{ url_for('index') }}">&larr; Todos os estabelecimentos</a>
+    </nav>
+
+    <div class="row align-items-center g-4">
+      <div class="col-md-8">
+        <div class="d-flex gap-3 align-items-start">
+          <div class="est-emoji" aria-hidden="true">{{ e.emoji }}</div>
+          <div>
+            <span class="chip">{{ e.categoria }}</span>
+            <h1 class="est-nome">{{ e.nome }}</h1>
+            <p class="est-endereco mb-2">{{ e.endereco }}. Faixa de preço {{ e.faixa_preco }}.</p>
+            <p class="est-desc mb-0">{{ e.descricao }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="est-nota">
+          {% if e.total_avaliacoes %}
+          <div class="d-flex align-items-baseline gap-2">
+            <span class="est-nota-num">{{ e.media|decimal_br }}</span>
+            <span class="est-nota-de">de 5</span>
+          </div>
+          {{ estrelas(e.media, 'stars-lg') }}
+          <p class="est-nota-sub">
+            {{ e.total_avaliacoes }}
+            {{ 'avaliação verificada' if e.total_avaliacoes == 1 else 'avaliações verificadas' }}
+          </p>
+          {% else %}
+          <p class="est-nota-sub mb-2">Ainda sem avaliações verificadas.</p>
+          {% endif %}
+          <a class="btn btn-su-green w-100" href="#avaliar">Escrever avaliação</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{{ flashes() }}
+
+<div class="container py-5">
+  <div class="row g-4 g-xl-5">
+
+    <!-- Avaliações já publicadas -->
+    <section class="col-lg-7" aria-labelledby="titulo-avaliacoes">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 id="titulo-avaliacoes" class="h4 fw-bold mb-0">O que dizem quem foi de verdade</h2>
+        <span class="text-secondary small">{{ avaliacoes|length }} no total</span>
+      </div>
+
+      {% for a in avaliacoes %}
+      <article class="review {% if nova == a.id %}review-nova{% endif %}" id="avaliacao-{{ a.id }}">
+        <div class="d-flex gap-3">
+          <div class="avatar" aria-hidden="true">{{ a.nome_cliente[0]|upper }}</div>
+          <div class="flex-grow-1">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+              <div>
+                <h3 class="h6 fw-bold mb-0">{{ a.nome_cliente }}</h3>
+                <span class="small text-secondary">{{ a.criado_em|data_br }}</span>
+              </div>
+              {{ badge_verificado() }}
+            </div>
+            <div class="my-2">{{ estrelas(a.nota) }}</div>
+            <p class="review-texto mb-0">{{ a.comentario }}</p>
+          </div>
+        </div>
+      </article>
+      {% else %}
+      <div class="vazio">
+        <p class="fw-semibold mb-1">Nenhuma avaliação verificada ainda.</p>
+        <p class="text-secondary mb-0">Peça o código do comprovante ao estabelecimento e seja o primeiro a avaliar.</p>
+      </div>
+      {% endfor %}
+    </section>
+
+    <!-- Formulário de nova avaliação -->
+    <aside class="col-lg-5">
+      <div class="card form-card" id="avaliar">
+        <div class="card-body p-4">
+          <h2 class="h4 fw-bold">Avalie sua visita</h2>
+          <p class="text-secondary small">
+            Para publicar, informe o <strong>código do comprovante ou cupom</strong> recebido no atendimento.
+            Cada código libera uma única avaliação.
+          </p>
+
+          {% if erro %}
+          <div class="alert alert-danger" role="alert">
+            <strong class="d-block mb-1">Sua avaliação não foi publicada</strong>
+            {{ erro.mensagem }}
+          </div>
+          {% endif %}
+
+          <form method="post" action="{{ url_for('estabelecimento', estabelecimento_id=e.id) }}#avaliar">
+            <div class="mb-3">
+              <label for="nome" class="form-label fw-semibold">Seu nome</label>
+              <input type="text" class="form-control {% if campo == 'nome' %}is-invalid{% endif %}"
+                     id="nome" name="nome" maxlength="60" required autocomplete="name"
+                     placeholder="Como você quer aparecer" value="{{ form.nome }}">
+            </div>
+
+            <div class="mb-3">
+              <label for="codigo" class="form-label fw-semibold">Código do comprovante</label>
+              <div class="input-group">
+                <span class="input-group-text">{{ selo(18) }}</span>
+                <input type="text" class="form-control input-codigo {% if campo == 'codigo' %}is-invalid{% endif %}"
+                       id="codigo" name="codigo" maxlength="30" required autocomplete="off"
+                       autocapitalize="characters" spellcheck="false"
+                       placeholder="Digite o código do cupom" value="{{ form.codigo }}"
+                       aria-describedby="ajuda-codigo">
+              </div>
+              <div id="ajuda-codigo" class="form-text">Está impresso no seu cupom ou comprovante. Funciona uma vez só.</div>
+            </div>
+
+            <fieldset class="mb-3">
+              <legend class="form-label fw-semibold fs-6">Sua nota</legend>
+              <div class="star-rating" role="radiogroup">
+                {% for n in [5, 4, 3, 2, 1] %}
+                <input type="radio" id="nota{{ n }}" name="nota" value="{{ n }}"
+                       {% if form.nota == n %}checked{% endif %} required>
+                <label for="nota{{ n }}" title="{{ n }} {{ 'estrela' if n == 1 else 'estrelas' }}">
+                  <span class="visually-hidden">{{ n }} {{ 'estrela' if n == 1 else 'estrelas' }}</span>
+                  <span aria-hidden="true">★</span>
+                </label>
+                {% endfor %}
+              </div>
+            </fieldset>
+
+            <div class="mb-4">
+              <label for="comentario" class="form-label fw-semibold">Como foi a experiência?</label>
+              <textarea class="form-control {% if campo == 'comentario' %}is-invalid{% endif %}"
+                        id="comentario" name="comentario" rows="4" minlength="10" maxlength="600" required
+                        placeholder="Conte como foi o atendimento, o serviço, a estrutura...">{{ form.comentario }}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-su-green btn-lg w-100">Publicar avaliação verificada</button>
+            <p class="form-text text-center mt-2 mb-0">Ao publicar, o código é marcado como utilizado.</p>
+          </form>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+{% endblock %}

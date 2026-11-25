@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Página não encontrada | {{ NOME_APP }}{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <h1 class="h2 fw-bold mt-4">Página não encontrada</h1>
+  <p class="text-secondary mb-4">Não encontramos a página que você procurou. Ela pode ter sido removida ou o endereço está incorreto.</p>
+  <a class="btn btn-su-dark btn-lg" href="{{ url_for('index') }}">Voltar para os estabelecimentos</a>
+</div>
+{% endblock %}
